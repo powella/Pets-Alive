@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="light" />
+  <title>Pocket Pal — a cozy 8-bit pet</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="bg" aria-hidden="true">
+    <span class="cloud cloud--1"></span>
+    <span class="cloud cloud--2"></span>
+    <span class="cloud cloud--3"></span>
+    <span class="sparkle sparkle--1"></span>
+    <span class="sparkle sparkle--2"></span>
+    <span class="sparkle sparkle--3"></span>
+  </div>
+
+  <main class="device">
+    <div class="device__brand">
+      <span class="brand__dot" aria-hidden="true"></span>
+      <span class="brand__text">POCKET PAL</span>
+      <button class="mute" id="mute-btn" type="button" aria-pressed="false">SFX ON</button>
+    </div>
+
+    <div class="bezel">
+      <div class="screen">
+        <header class="hud">
+          <div class="hud__pts" title="Care Points">
+            <canvas class="ico" id="ico-coin" width="16" height="16" aria-hidden="true"></canvas>
+            <span id="points-val">0</span>
+            <span class="hud__unit">CP</span>
+          </div>
+          <div class="hud__streak" id="streak-badge" title="Care streak — keep caring to raise your multiplier">
+            <canvas class="ico" id="ico-flame" width="16" height="16" aria-hidden="true"></canvas>
+            <span id="streak-val">1</span>
+            <span class="hud__mult" id="mult-val">×1</span>
+          </div>
+        </header>
+
+        <div class="stage" id="stage">
+          <canvas id="pet-canvas" width="160" height="160" aria-label="Your pocket pal"></canvas>
+          <div class="bubble" id="bubble" role="status" hidden></div>
+        </div>
+
+        <div class="stats">
+          <div class="stat" data-stat="hunger">
+            <canvas class="ico" data-icon="apple" width="16" height="16" aria-hidden="true"></canvas>
+            <div class="bar"><i id="bar-hunger"></i></div>
+          </div>
+          <div class="stat" data-stat="thirst">
+            <canvas class="ico" data-icon="drop" width="16" height="16" aria-hidden="true"></canvas>
+            <div class="bar bar--water"><i id="bar-thirst"></i></div>
+          </div>
+          <div class="stat" data-stat="happiness">
+            <canvas class="ico" data-icon="heart" width="16" height="16" aria-hidden="true"></canvas>
+            <div class="bar bar--joy"><i id="bar-happiness"></i></div>
+          </div>
+        </div>
+
+        <div class="panels">
+          <section class="panel is-active" data-panel="care">
+            <div class="growth">
+              <div class="growth__row">
+                <span class="growth__title">GROWTH</span>
+                <span class="growth__stage" id="growth-label">Little Bun</span>
+              </div>
+              <div class="bar bar--xp"><i id="bar-xp"></i><span class="bar__max">MAX</span></div>
+              <div class="growth__hint" id="growth-hint">200 XP to grow</div>
+            </div>
+            <div class="actions">
+              <button class="btn" type="button" data-go="snacks">SNACKS</button>
+              <button class="btn" type="button" data-act="water">WATER</button>
+              <button class="btn" type="button" data-act="pet">PET</button>
+            </div>
+            <button class="link-btn" id="new-pet" type="button">name a new pal (your old pal waits in the store)</button>
+          </section>
+
+          <section class="panel" data-panel="snacks">
+            <p class="panel__hint">Tap a snack or drag it onto your pal</p>
+            <div class="food-grid" id="food-grid"></div>
+          </section>
+
+          <section class="panel" data-panel="closet">
+            <div class="cat-tabs" id="cat-tabs"></div>
+            <div class="shop" id="shop"></div>
+          </section>
+
+          <section class="panel" data-panel="store">
+            <p class="panel__hint">Pets you name are kept here — tap one to adopt it</p>
+            <div class="pet-store" id="pet-store"></div>
+          </section>
+        </div>
+
+        <nav class="tabs" aria-label="Screens">
+          <button type="button" data-tab="care" class="is-active">CARE</button>
+          <button type="button" data-tab="snacks">SNACKS</button>
+          <button type="button" data-tab="closet">CLOSET</button>
+          <button type="button" data-tab="store">STORE</button>
+        </nav>
+
+        <div class="onboard" id="onboard" hidden>
+          <h1 class="onboard__title">PICK YOUR PAL</h1>
+          <div class="species-grid" id="species-grid"></div>
+          <div class="tint-row" id="tint-row"></div>
+          <label class="name-row">
+            <span>NAME</span>
+            <input id="name-input" maxlength="12" autocomplete="off" spellcheck="false" placeholder="Mochi" />
+          </label>
+          <div class="onboard__foot">
+            <button class="btn btn--ghost" type="button" id="cancel-create" hidden>BACK</button>
+            <button class="btn btn--go" type="button" id="start-btn">LET'S GO</button>
+          </div>
+          <p class="onboard__note">Feed, water and pet your pal to earn Care Points.<br />Spend them in the closet and watch it grow.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="device__foot">
+      <div class="nameplate">
+        <span id="pet-name">—</span>
+        <span class="stage-chip" id="stage-label">BABY</span>
+      </div>
+      <div class="keys">
+        <button class="key key--a" type="button" data-act="pet"><span>PET</span></button>
+        <button class="key key--b" type="button" data-act="water"><span>H2O</span></button>
+        <button class="key key--c" type="button" data-act="snacks"><span>EAT</span></button>
+      </div>
+      <div class="grill" aria-hidden="true">
+        <i></i><i></i><i></i><i></i><i></i><i></i>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/game.js"></script>
+</body>
+</html>
