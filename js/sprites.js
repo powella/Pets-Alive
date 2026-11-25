@@ -1054,3 +1054,174 @@ export function drawItemIcon(ctx, item) {
   arcSmile(ctx, L.head.cx, L.head.cy + 4.4, 4.4, 1, DARK, 1);
   if (item.draw) item.draw(ctx, L, 0);
 }
+
+/* ---------------- scenes ---------------- */
+
+export const SCENES = [
+  { id: 'meadow', name: 'MEADOW' },
+  { id: 'sunset', name: 'SUNSET' },
+  { id: 'night', name: 'NIGHT' },
+  { id: 'shore', name: 'SHORE' },
+];
+
+const GROUND = 132;
+
+function skyBands(ctx, colors) {
+  const h = 160 / colors.length;
+  colors.forEach((c, i) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(0, Math.round(i * h), 160, Math.ceil(h) + 1);
+  });
+}
+
+const FLIES = [
+  [28, 60, 0],
+  [56, 44, 1.7],
+  [104, 70, 3.1],
+  [132, 48, 4.4],
+  [76, 92, 2.4],
+  [18, 98, 5.2],
+];
+
+function fireflies(ctx, t, color) {
+  for (const [x, y, phase] of FLIES) {
+    const fx = x + Math.sin(t * 0.7 + phase) * 7;
+    const fy = y + Math.cos(t * 0.9 + phase) * 5;
+    ctx.globalAlpha = 0.3 + Math.abs(Math.sin(t * 1.6 + phase)) * 0.6;
+    px(ctx, fx, fy, 1.6, 1.6, color);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function sceneMeadow(ctx, t) {
+  skyBands(ctx, ['#f8fdea', '#eef8db', '#e2f1ca', '#d6ebbc']);
+  oval(ctx, 116, 30, 17, 5, 'rgba(255,255,255,0.85)');
+  oval(ctx, 104, 33, 11, 4, 'rgba(255,255,255,0.85)');
+  oval(ctx, 44, 22, 12, 4, 'rgba(255,255,255,0.65)');
+  px(ctx, 0, GROUND, 160, 28, '#c9e5a8');
+  px(ctx, 0, GROUND, 160, 2, '#ddf0c3');
+  oval(ctx, 80, 139, 44, 7, 'rgba(150, 214, 178, 0.35)');
+  tri(ctx, 26, 137, 7, 8, 'rgba(120, 196, 150, 0.5)');
+  tri(ctx, 33, 138, 5, 6, 'rgba(120, 196, 150, 0.42)');
+  tri(ctx, 133, 137, 6, 7, 'rgba(120, 196, 150, 0.5)');
+  tri(ctx, 141, 139, 5, 5, 'rgba(120, 196, 150, 0.4)');
+  for (const [x, y] of [[36, 148], [122, 151]]) {
+    px(ctx, x, y, 3, 3, '#fff2f7');
+    px(ctx, x + 1, y + 1, 1.4, 1.4, '#ffb0cc');
+  }
+  fireflies(ctx, t, 'rgba(255, 214, 120, 0.9)');
+}
+
+function sceneSunset(ctx, t) {
+  skyBands(ctx, ['#ffeab2', '#ffd29a', '#ffb08e', '#f08c92', '#c9729a', '#91609a']);
+  oval(ctx, 80, 112, 22, 22, '#ffeaa6', 1);
+  oval(ctx, 80, 112, 16, 16, '#ffd166', 1);
+  for (const [x, y] of [[38, 50], [46, 47], [52, 51], [96, 62], [103, 59]]) px(ctx, x, y, 3, 1.6, 'rgba(80, 50, 90, 0.55)');
+  tri(ctx, 34, 136, 96, 40, '#7a5490');
+  tri(ctx, 118, 136, 108, 52, '#63457e');
+  px(ctx, 0, GROUND, 160, 28, '#4d3467');
+  triangleShadow(ctx);
+  fireflies(ctx, t, 'rgba(255, 232, 170, 0.95)');
+}
+
+function triangleShadow(ctx) {
+  ctx.globalAlpha = 0.25;
+  oval(ctx, 80, 139, 44, 6, '#1d1230');
+  ctx.globalAlpha = 1;
+}
+
+const STARS = [
+  [16, 14], [34, 26], [52, 12], [70, 22], [88, 10], [104, 20], [124, 14], [142, 26],
+  [24, 42], [60, 38], [96, 40], [134, 44], [44, 56], [112, 56], [76, 68], [150, 66],
+];
+
+function sceneNight(ctx, t) {
+  skyBands(ctx, ['#221b3e', '#281f47', '#2e2450', '#342959']);
+  STARS.forEach(([x, y], i) => {
+    ctx.globalAlpha = 0.4 + Math.abs(Math.sin(t * 1.1 + i)) * 0.6;
+    px(ctx, x, y, 1.6, 1.6, '#fff6cf');
+  });
+  ctx.globalAlpha = 1;
+  oval(ctx, 122, 30, 12, 12, '#fdf6d8', 1);
+  oval(ctx, 128, 26, 10, 10, '#2a2148', 1);
+  tri(ctx, 40, 136, 110, 42, '#1b1735');
+  tri(ctx, 122, 136, 120, 56, '#151128');
+  px(ctx, 0, GROUND, 160, 28, '#221c3c');
+  triangleShadow(ctx);
+  fireflies(ctx, t, 'rgba(190, 230, 255, 0.85)');
+}
+
+function sceneShore(ctx, t) {
+  skyBands(ctx, ['#e3f6ff', '#cfecff', '#b8e2ff', '#a2d8fb']);
+  oval(ctx, 118, 34, 11, 11, '#fff3bf', 1);
+  oval(ctx, 118, 34, 7, 7, '#ffe38a', 1);
+  px(ctx, 0, 100, 160, 32, '#79c6f2');
+  px(ctx, 0, 100, 160, 2, '#a9e2fb');
+  px(ctx, 0, 108, 160, 3, '#96d8f8');
+  px(ctx, 0, 116, 160, 3, '#96d8f8');
+  px(ctx, 0, 124, 160, 3, '#a9e2fb');
+  for (let i = 0; i < 6; i++) {
+    const x = ((t * 14 + i * 34) % 210) - 24;
+    px(ctx, x, 104 + (i % 3) * 7, 10, 1.8, 'rgba(255,255,255,0.8)');
+  }
+  px(ctx, 0, GROUND, 160, 28, '#f7e7bb');
+  px(ctx, 0, GROUND, 160, 2, '#fff3d2');
+  for (const [x, y] of [[30, 144], [120, 148], [96, 154]]) px(ctx, x, y, 2, 2, '#e7c98f');
+  oval(ctx, 80, 139, 44, 7, 'rgba(214, 178, 120, 0.3)');
+}
+
+const SCENE_DRAW = {
+  meadow: sceneMeadow,
+  sunset: sceneSunset,
+  night: sceneNight,
+  shore: sceneShore,
+};
+
+export function drawScene(ctx, id, t) {
+  (SCENE_DRAW[id] || sceneMeadow)(ctx, t);
+}
+
+/* ---------------- playground toys + doors ---------------- */
+
+const TOY_DRAW = {
+  ball(ctx) {
+    oval(ctx, 20, 23, 12, 11, '#ff8a5c', 1);
+    oval(ctx, 20, 23, 9, 8, '#ffa87a', 1);
+    px(ctx, 8, 22, 24, 2.4, '#ffe0b0');
+    oval(ctx, 15, 17, 3.2, 2.8, 'rgba(255,255,255,0.75)', 1);
+  },
+  frisbee(ctx) {
+    oval(ctx, 20, 27, 15, 8, '#3f9c72', 1);
+    oval(ctx, 20, 25, 14, 6.5, '#7fd6a0', 1);
+    oval(ctx, 20, 24, 9, 4, '#a8e6c0', 1);
+    px(ctx, 8, 24, 24, 1.4, 'rgba(255,255,255,0.8)');
+  },
+  bubbles(ctx) {
+    const bubble = (cx, cy, r) => {
+      part(ctx, cx, cy, r, r, 'rgba(190, 235, 255, 0.55)', '#5fb6e8', 1);
+      px(ctx, cx - r / 2, cy - r / 2, 1.8, 1.8, '#ffffff');
+    };
+    bubble(14, 14, 5.5);
+    bubble(27, 23, 4.5);
+    bubble(17, 30, 3.2);
+  },
+};
+
+export function drawToy(ctx, id) {
+  const size = ctx.canvas.width || 40;
+  ctx.clearRect(0, 0, size, size);
+  const fn = TOY_DRAW[id];
+  if (fn) fn(ctx);
+}
+
+export function drawDoor(ctx, accent) {
+  const size = ctx.canvas.width || 40;
+  ctx.clearRect(0, 0, size, size);
+  px(ctx, 5, 2, 30, 37, '#f1e4ff');
+  px(ctx, 5, 2, 30, 2.4, '#cbb0f2');
+  px(ctx, 8, 7, 24, 32, accent);
+  px(ctx, 8, 7, 24, 2, 'rgba(255,255,255,0.6)');
+  px(ctx, 8, 21, 24, 2, 'rgba(68,51,87,0.16)');
+  px(ctx, 27, 24, 3.2, 3.2, '#ffd166');
+  px(ctx, 4, 38, 32, 2.4, '#7d5fb8');
+}

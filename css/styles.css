@@ -212,6 +212,7 @@ body::before {
   position: relative;
   display: grid;
   place-items: center;
+  touch-action: pan-y;
 }
 
 #pet-canvas {
@@ -605,16 +606,16 @@ body::before {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 5px;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
 }
 
 .tabs button {
   font-family: inherit;
   font-weight: 700;
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
-  padding: 7px 2px;
+  font-size: 8.5px;
+  letter-spacing: 0.05em;
+  padding: 7px 1px;
   border: 2px solid var(--ink);
   border-radius: 7px;
   background: linear-gradient(#fffdf6, #efe4d2);
@@ -820,6 +821,113 @@ body::before {
   #pet-canvas { max-width: 208px; }
   .panels { height: 152px; }
 }
+
+/* ---------------- scenes ---------------- */
+
+.scene-dots {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  z-index: 3;
+}
+
+.scene-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 2px solid rgba(68, 51, 87, 0.55);
+  border-radius: 50%;
+  background: #fffdf6;
+  cursor: pointer;
+}
+
+.scene-dot.is-on {
+  background: #ffce5c;
+  border-color: #a8741a;
+}
+
+/* ---------------- needs ---------------- */
+
+.needs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+  min-height: 17px;
+}
+
+.need {
+  font-size: 7.5px;
+  letter-spacing: 0.08em;
+  padding: 2px 7px;
+  border: 2px solid var(--ink);
+  border-radius: 99px;
+  background: #fffdf6;
+}
+
+.need--ok { color: #3f8a63; border-color: #8fc3a5; }
+.need--hungry { background: #ffe3c8; border-color: #b5701a; color: #8a4b00; }
+.need--thirsty { background: #d8efff; border-color: #2f8fd0; color: #1b5f8f; }
+.need--lonely { background: #ffdde8; border-color: #d2447a; color: #a12457; }
+
+/* ---------------- doors ---------------- */
+
+.doors {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 5px;
+  margin-bottom: 7px;
+}
+
+.door {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 2px 0 3px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: linear-gradient(#fffdf6, #efe6d6);
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(68, 51, 87, 0.28);
+}
+
+.door canvas { width: 30px; height: 30px; image-rendering: pixelated; }
+.door__label { font-size: 7px; font-weight: 700; letter-spacing: 0.04em; }
+.door:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(68, 51, 87, 0.28); }
+
+/* ---------------- playground ---------------- */
+
+.toy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+
+.toy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 2px 5px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: #fffdf6;
+  color: var(--ink);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 3px 0 rgba(68, 51, 87, 0.28);
+}
+
+.toy canvas { width: 44px; height: 44px; image-rendering: pixelated; }
+.toy__name { font-size: 8.5px; font-weight: 700; }
+.toy__gain { font-size: 7px; color: var(--ink-2); }
+.toy:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(68, 51, 87, 0.28); }
 
 @media (prefers-reduced-motion: reduce) {
   .bubble.pop, .hud__streak.is-hot, .bar.is-low i { animation: none; }

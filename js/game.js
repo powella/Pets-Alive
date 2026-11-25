@@ -3,6 +3,7 @@ import {
   TINTS,
   CLOTHING,
   FOODS,
+  SCENES,
   findClothing,
   drawPet,
   drawFood,
@@ -11,11 +12,12 @@ import {
   drawIcon,
   drawHeart,
   drawStar,
-  oval,
-  tri,
+  drawScene,
+  drawToy,
+  drawDoor,
   px,
-} from './sprites.js';
-import { sfx, setMuted, initAudio } from './audio.js';
+} from './sprites.js?v=2';
+import { sfx, setMuted, initAudio } from './audio.js?v=2';
 
 /* ---------------- helpers ---------------- */
 
@@ -29,6 +31,7 @@ const STAGE_XP = [0, 200, 650];
 const MAX_STAGE = STAGE_XP.length - 1;
 const STAGE_CHIP = ['BABY', 'JUNIOR', 'GROWN ★'];
 const STREAK_WINDOW = 18000; // ms between care actions to keep the streak alive
+const DECAY = { hunger: 1.1, thirst: 1.3, happiness: 0.9 }; // points lost per minute
 
 /** Stage is always derived from XP, so the two can never disagree. */
 const stageForXp = (xp) => {
@@ -44,6 +47,7 @@ function defaultState() {
   return {
     pet: null,
     roster: [],
+    scene: 'meadow',
     points: 40,
     streak: 1,
     lastActionAt: 0,
@@ -102,6 +106,7 @@ function normalizeState(raw) {
   return {
     pet,
     roster,
+    scene: SCENES.some((s) => s.id === raw.scene) ? raw.scene : 'meadow',
     points: Math.max(0, Math.round(Number(raw.points) || 0)),
     streak: clamp(Math.round(Number(raw.streak) || 1), 1, 30),
     lastActionAt: Number(raw.lastActionAt) || 0,
@@ -155,6 +160,10 @@ const bubbleEl = $('#bubble');
 const foodGrid = $('#food-grid');
 const shopEl = $('#shop');
 const storeEl = $('#pet-store');
+const doorsEl = $('#doors');
+const toyGridEl = $('#toy-grid');
+const needsEl = $('#needs-row');
+const sceneDotsEl = $('#scene-dots');
 const catTabsEl = $('#cat-tabs');
 const onboardEl = $('#onboard');
 const speciesGridEl = $('#species-grid');
@@ -395,6 +404,84 @@ function petAction() {
   renderCare();
 }
 
+/* ---------------- areas + playground ---------------- */
+
+const AREAS = [
+  { id: 'play', label: 'PLAY', name: 'Playground', accent: '#7fd6a0' },
+  { id: 'snacks', label: 'EAT', name: 'Kitchen', accent: '#ffd166' },
+  { id: 'closet', label: 'WEAR', name: 'Closet', accent: '#ff8fb1' },
+  { id: 'care', label: 'CARE', name: 'Nursery', accent: '#c6abf4' },
+];
+
+const TOYS = [
+  { id: 'ball', name: 'Ball', happy: 14, points: 7, xp: 9, line: ['Wheee!', 'Boing boing!', 'Catch me!'] },
+  { id: 'frisbee', name: 'Frisbee', happy: 18, points: 9, xp: 11, line: ['I got it!', 'Zoom!', 'Throw it again!'] },
+  { id: 'bubbles', name: 'Bubbles', happy: 11, points: 6, xp: 7, line: ['Pop pop!', 'Ooh, shiny!', 'Bubble!'] },
+];
+
+function renderDoors() {
+  if (!doorsEl) return;
+  doorsEl.innerHTML = '';
+  for (const area of AREAS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'door';
+    btn.title = area.name;
+    btn.innerHTML = `<canvas width="40" height="40" aria-hidden="true"></canvas><span class="door__label">${area.label}</span>`;
+    btn.addEventListener('click', () => {
+      initAudio();
+      sfx.blip();
+      setTab(area.id);
+    });
+    doorsEl.appendChild(btn);
+    drawDoor(btn.querySelector('canvas').getContext('2d'), area.accent);
+  }
+}
+
+function renderPlayground() {
+  if (!toyGridEl) return;
+  toyGridEl.innerHTML = '';
+  for (const toy of TOYS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'toy';
+    btn.innerHTML = `
+      <canvas width="40" height="40" aria-hidden="true"></canvas>
+      <span class="toy__name">${toy.name}</span>
+      <span class="toy__gain">+${toy.happy} joy</span>`;
+    btn.addEventListener('click', () => playAction(toy.id));
+    toyGridEl.appendChild(btn);
+    drawToy(btn.querySelector('canvas').getContext('2d'), toy.id);
+  }
+}
+
+function playAction(id) {
+  if (!state.pet) return;
+  const toy = TOYS.find((t) => t.id === id);
+  if (!toy) return;
+  initAudio();
+  bumpStreak();
+  const { pts } = award(toy.points, toy.xp);
+  const p = state.pet;
+
+  p.happiness = clamp(p.happiness + toy.happy, 0, 100);
+  anim.hopV = toy.id === 'ball' ? 86 : toy.id === 'frisbee' ? 60 : 34;
+  anim.wiggle = 0.5;
+  react('sparkle', 1);
+  spawnText(80, 40, `+${pts}`, '#e04c7c');
+  if (toy.id === 'frisbee') spawnStars(8);
+  else if (toy.id === 'bubbles') spawnDrops(7);
+  else spawnHearts(3);
+  speech(pick(toy.line));
+  sfx.chirp();
+
+  checkStage();
+  save();
+  renderHud();
+  renderStats();
+  renderCare();
+}
+
 /* ---------------- shop ---------------- */
 
 function onShopClick(id, el) {
@@ -447,7 +534,33 @@ function renderHud() {
   $('#streak-badge').classList.toggle('is-hot', state.streak >= 4);
 }
 
+function renderNeeds() {
+  if (!needsEl) return;
+  const p = state.pet;
+  const needs = [];
+  if (p) {
+    if (p.hunger < 35) needs.push(['hungry', 'HUNGRY']);
+    if (p.thirst < 35) needs.push(['thirsty', 'THIRSTY']);
+    if (p.happiness < 30) needs.push(['lonely', 'NEEDS ATTENTION']);
+  }
+  needsEl.innerHTML = '';
+  if (!needs.length) {
+    const ok = document.createElement('span');
+    ok.className = 'need need--ok';
+    ok.textContent = p ? 'ALL NEEDS MET \u2665' : 'NO PAL YET';
+    needsEl.appendChild(ok);
+    return;
+  }
+  for (const [cls, label] of needs) {
+    const chip = document.createElement('span');
+    chip.className = `need need--${cls}`;
+    chip.textContent = label;
+    needsEl.appendChild(chip);
+  }
+}
+
 function renderStats() {
+  renderNeeds();
   const p = state.pet;
   if (!p) return;
   const set = (id, value) => {
@@ -554,7 +667,6 @@ function adoptPet(id) {
   speech(`${target.name} is back!`, 2200);
   sfx.sparkle();
   save();
-  setTab('care');
   renderAll();
 }
 
@@ -597,6 +709,9 @@ function renderAll() {
   renderCare();
   renderCloset();
   renderStore();
+  renderDoors();
+  renderPlayground();
+  renderSceneDots();
   updateMute();
 }
 
@@ -651,7 +766,7 @@ function openCreator() {
   $('#cancel-create').hidden = !state.pet;
   renderCreator();
   onboardEl.hidden = false;
-  setTab('care');
+  setTab('home');
 }
 
 function startPet() {
@@ -684,7 +799,7 @@ function startPet() {
   speech(`${name}! Nice to meet you!`, 2400);
   initAudio();
   sfx.sparkle();
-  setTab('care');
+  setTab('home');
   save();
   renderAll();
 }
@@ -790,24 +905,65 @@ function drawFoodCanvases(now) {
   }
 }
 
-/* ---------------- stage rendering ---------------- */
+/* ---------------- scenes (swipe) ---------------- */
 
-function drawBackdrop(ctx, t) {
-  oval(ctx, 116, 30, 17, 5, 'rgba(255,255,255,0.8)');
-  oval(ctx, 104, 33, 11, 4, 'rgba(255,255,255,0.8)');
-  oval(ctx, 44, 22, 12, 4, 'rgba(255,255,255,0.6)');
+let suppressPetUntil = 0;
 
-  oval(ctx, 80, 139, 44, 7, 'rgba(150, 214, 178, 0.35)');
-  tri(ctx, 26, 137, 7, 8, 'rgba(120, 196, 150, 0.5)');
-  tri(ctx, 33, 138, 5, 6, 'rgba(120, 196, 150, 0.42)');
-  tri(ctx, 133, 137, 6, 7, 'rgba(120, 196, 150, 0.5)');
+const sceneIndex = () => {
+  const i = SCENES.findIndex((s) => s.id === state.scene);
+  return i < 0 ? 0 : i;
+};
 
-  for (let i = 0; i < 3; i++) {
-    const a = t * 0.6 + i * 2.1;
-    const x = 42 + ((Math.sin(a) + 1) / 2) * 78;
-    const y = 40 + ((Math.cos(a * 1.3) + 1) / 2) * 62;
-    px(ctx, x, y, 1.6, 1.6, 'rgba(255, 214, 120, 0.85)');
-  }
+function setScene(index) {
+  const next = ((index % SCENES.length) + SCENES.length) % SCENES.length;
+  state.scene = SCENES[next].id;
+  renderSceneDots();
+  save();
+}
+
+function cycleScene(dir) {
+  initAudio();
+  sfx.blip();
+  setScene(sceneIndex() + dir);
+  speech(SCENES[sceneIndex()].name, 1100);
+}
+
+function renderSceneDots() {
+  if (!sceneDotsEl) return;
+  sceneDotsEl.innerHTML = '';
+  SCENES.forEach((scene, i) => {
+    const dot = document.createElement('button');
+    dot.type = 'button';
+    dot.className = 'scene-dot' + (scene.id === state.scene ? ' is-on' : '');
+    dot.title = scene.name;
+    dot.setAttribute('aria-label', `Background: ${scene.name}`);
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setScene(i);
+      speech(scene.name, 1100);
+    });
+    sceneDotsEl.appendChild(dot);
+  });
+}
+
+function wireSwipe() {
+  let start = null;
+  stageEl.addEventListener('pointerdown', (e) => {
+    start = { x: e.clientX, y: e.clientY };
+  });
+  stageEl.addEventListener('pointerup', (e) => {
+    if (!start) return;
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    start = null;
+    if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy)) {
+      suppressPetUntil = performance.now() + 400;
+      cycleScene(dx < 0 ? 1 : -1);
+    }
+  });
+  stageEl.addEventListener('pointercancel', () => {
+    start = null;
+  });
 }
 
 function currentExpression() {
@@ -839,7 +995,7 @@ function drawParticles(ctx) {
 function drawStage(now) {
   petCtx.clearRect(0, 0, 160, 160);
   petCtx.imageSmoothingEnabled = false;
-  drawBackdrop(petCtx, anim.t);
+  drawScene(petCtx, state.scene, anim.t);
 
   if (state.pet) {
     const expression = currentExpression();
@@ -939,9 +1095,9 @@ function startTimers() {
     lastDecay = now;
 
     const p = state.pet;
-    p.hunger = clamp(p.hunger - mins * 0.6, 0, 100);
-    p.thirst = clamp(p.thirst - mins * 0.7, 0, 100);
-    p.happiness = clamp(p.happiness - mins * 0.45, 0, 100);
+    p.hunger = clamp(p.hunger - mins * DECAY.hunger, 0, 100);
+    p.thirst = clamp(p.thirst - mins * DECAY.thirst, 0, 100);
+    p.happiness = clamp(p.happiness - mins * DECAY.happiness, 0, 100);
 
     if (now - state.lastActionAt > STREAK_WINDOW && state.streak > 1) state.streak = 1;
 
@@ -954,7 +1110,12 @@ function startTimers() {
 /* ---------------- wiring ---------------- */
 
 function wireEvents() {
-  petCanvas.addEventListener('click', () => petAction());
+  petCanvas.addEventListener('click', () => {
+    if (performance.now() < suppressPetUntil) return;
+    petAction();
+  });
+
+  wireSwipe();
 
   $$('.tabs button').forEach((btn) => {
     btn.addEventListener('click', () => {
@@ -1025,9 +1186,9 @@ function init() {
 
   if (hadSave && state.pet) {
     const mins = clamp((Date.now() - state.savedAt) / 60000, 0, 240);
-    state.pet.hunger = clamp(state.pet.hunger - mins * 0.6, 0, 100);
-    state.pet.thirst = clamp(state.pet.thirst - mins * 0.7, 0, 100);
-    state.pet.happiness = clamp(state.pet.happiness - mins * 0.45, 0, 100);
+    state.pet.hunger = clamp(state.pet.hunger - mins * DECAY.hunger, 0, 100);
+    state.pet.thirst = clamp(state.pet.thirst - mins * DECAY.thirst, 0, 100);
+    state.pet.happiness = clamp(state.pet.happiness - mins * DECAY.happiness, 0, 100);
     if (Date.now() - state.lastActionAt > STREAK_WINDOW) state.streak = 1;
   }
 
@@ -1041,7 +1202,7 @@ function init() {
   renderAll();
 
   if (state.pet) {
-    setTab('care');
+    setTab('home');
     renderCare();
     speech(`${state.pet.name} missed you!`, 2200);
   } else {

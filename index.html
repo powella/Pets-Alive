@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="color-scheme" content="light" />
   <title>Pocket Pal — a cozy 8-bit pet</title>
-  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/styles.css?v=2" />
 </head>
 <body>
   <div class="bg" aria-hidden="true">
@@ -42,6 +42,7 @@
         <div class="stage" id="stage">
           <canvas id="pet-canvas" width="160" height="160" aria-label="Your pocket pal"></canvas>
           <div class="bubble" id="bubble" role="status" hidden></div>
+          <div class="scene-dots" id="scene-dots" aria-label="Backgrounds"></div>
         </div>
 
         <div class="stats">
@@ -60,7 +61,7 @@
         </div>
 
         <div class="panels">
-          <section class="panel is-active" data-panel="care">
+          <section class="panel" data-panel="care">
             <div class="growth">
               <div class="growth__row">
                 <span class="growth__title">GROWTH</span>
@@ -74,7 +75,6 @@
               <button class="btn" type="button" data-act="water">WATER</button>
               <button class="btn" type="button" data-act="pet">PET</button>
             </div>
-            <button class="link-btn" id="new-pet" type="button">name a new pal (your old pal waits in the store)</button>
           </section>
 
           <section class="panel" data-panel="snacks">
@@ -87,17 +87,26 @@
             <div class="shop" id="shop"></div>
           </section>
 
-          <section class="panel" data-panel="store">
-            <p class="panel__hint">Pets you name are kept here — tap one to adopt it</p>
+          <section class="panel is-active" data-panel="home">
+            <div class="needs" id="needs-row"></div>
+            <div class="doors" id="doors"></div>
+            <p class="panel__hint">Your pals live here — tap one to adopt it</p>
             <div class="pet-store" id="pet-store"></div>
+            <button class="link-btn" id="new-pet" type="button">name a new pal</button>
+          </section>
+
+          <section class="panel" data-panel="play">
+            <p class="panel__hint">Take your pal out to play — swipe the yard for scenery</p>
+            <div class="toy-grid" id="toy-grid"></div>
           </section>
         </div>
 
         <nav class="tabs" aria-label="Screens">
-          <button type="button" data-tab="care" class="is-active">CARE</button>
+          <button type="button" data-tab="home" class="is-active">HOME</button>
+          <button type="button" data-tab="play">PLAY</button>
           <button type="button" data-tab="snacks">SNACKS</button>
           <button type="button" data-tab="closet">CLOSET</button>
-          <button type="button" data-tab="store">STORE</button>
+          <button type="button" data-tab="care">CARE</button>
         </nav>
 
         <div class="onboard" id="onboard" hidden>
@@ -133,6 +142,6 @@
     </div>
   </main>
 
-  <script type="module" src="js/game.js"></script>
+  <script type="module" src="js/game.js?v=2"></script>
 </body>
 </html>
